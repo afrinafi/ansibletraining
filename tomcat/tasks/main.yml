@@ -1,0 +1,57 @@
+---
+# tasks file for tomcat
+- name: install open-jdk, wget
+  ansible.builtin.yum:
+    name:
+      - java-1.8.0-openjdk-devel
+      - wget
+    state: present
+- name: create a group for tomcat
+  ansible.builtin.group:
+    name: "{{ tomcat_group }}"
+    state: present
+    system: true
+- name: create a tomcat user
+  ansible.builtin.user:
+    name: "{{ tomcat_user }}"
+    home: "{{ tomcat_home }}"
+    system: true
+- name: download latest tomcat
+  ansible.builtin.command: wget {{ tomcat_download_url }}
+- name: unzip tomcat
+  ansible.builtin.command: tar xvf "apache-tomcat-{{ tomcat_version }}.tar.gz" -C /usr/share/
+- name: check if the soflink exists
+  ansible.builtin.stat:
+    path: "{{ tomcat_home }}-{{ tomcat_version }}"
+  register: linkfile
+- debug:
+    var: linkfile
+- name: creating softlink
+  ansible.builtin.command: ln -s "{{ tomcat_home }}-{{ tomcat_version }}" "{{ tomcat_home }}"
+  when: linkfile.stat.exists == False
+- name: channge permissions
+  ansible.builtin.command: chown -R tomcat:tomcat "{{ tomcat_home }}"
+- name: channge permissions
+  ansible.builtin.command: chown -R tomcat:tomcat "{{ tomcat_home }}-{{ tomcat_version }}"
+- name: copy tomcat service file to directory
+  ansible.builtin.template:
+    src: tomcat.service.j2
+    dest: /etc/systemd/system/tomcat.service
+- name: copy tomcat users xml file to tomcat conf directory
+  ansible.builtin.template:
+    src: tomcat-users.xml.j2
+    dest: "{{tomcat_home }}/conf/tomcat-users.xml"
+- name: copy tomcat server.xml to tomcat conf directory
+  ansible.builtin.template:
+    src: server.xml.j2
+    dest: "{{tomcat_home }}/conf/server.xml"
+- name: start tomcat service
+  ansible.builtin.service:
+    name: tomcat
+    state: started
+    enabled: yes
+- name: example for a loop in jinja 2 template
+  ansible.builtin.template:
+    src: files.txt.j2
+    dest: "{{tomcat_home}}/files.txt"
+
