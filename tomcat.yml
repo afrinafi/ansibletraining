@@ -1,0 +1,55 @@
+---
+- name: Install tomcat
+  hosts: webserver
+  become: true
+  tasks:
+    - name: enable open Jdk version 11
+      ansible.builtin.command:  amazon-linux-extras enable java-openjdk11
+    - name: Install open JDK 11
+      ansible.builtin.yum:
+        name: java-11-openjdk
+        state: present
+    - name: Add tomcat  group
+      ansible.builtin.group:
+        name: tomcat
+        state: present
+        system: true
+    - name: Add Tomcat user
+      ansible.builtin.user:
+        name: tomcat
+        group:
+        create_home: true
+        home: /usr/share/tomcat
+        system: true
+        shell: /bin/bash
+    - name: Download latest version of tomcat
+      ansible.builtin.command: wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.58/bin/apache-tomcat-9.0.58.tar.gz
+    - name: create sym link
+      ansible.builtin.unarchive:
+          src: /home/ec2-user/apache-tomcat-9.0.58.tar.gz
+          dest: /usr/share/
+          owner: tomcat
+          group: tomcat
+          remote_src: true
+            #- name: create sym link
+            # ansible.builtin.command: ln -s /usr/share/apache-tomcat-9.0.58/ /usr/share/tomcat
+            #src: /usr/share/apache-tomcat-9.0.58
+            #dest: /usr/share/tomcat
+            #owner: tomcat
+            #group: tomcat
+            #state: link
+            #force: yes
+    - name: create tomcat service file
+      ansible.builtin.copy:
+        src: tomcat.service
+        dest: /etc/systemd/system/tomcat.service
+          #- name: Reload tomcat service
+          #ansible.builtin.systemd:
+          #name: tomcat.service
+          #daemon_reload: yes
+          #state: reloaded
+    - name: start tomcat service
+      ansible.builtin.service:
+        name: tomcat
+        enabled: true
+        state: restarted
