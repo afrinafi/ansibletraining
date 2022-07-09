@@ -3,27 +3,37 @@
   hosts: webservers
   gather_facts: True
   become: true
+  vars:
+    javaversion: 'java-openjdk11'
+    javapackagename: java-11-openjdk
+    tomcat_user: tomcat
+    tomcat_group : tomcat
+    tomcat_homepath : /usr/share/tomcat
+    tomcat_version: '9.0.64'
+    tomcat_download_url: 'https://dlcdn.apache.org/tomcat/tomcat-9/v'
+ 
+
   tasks:
     - name:  Update latest package in Server
       ansible.builtin.yum:
         name: '*'
         state: latest
     - name: Enable openjdk11 in amazon linux extras
-      ansible.builtin.command: amazon-linux-extras enable java-openjdk11
+      ansible.builtin.command: amazon-linux-extras enable "{{ javaversion }}"
     - name: Install openjdk
       ansible.builtin.yum:
-        name: java-11-openjdk
+        name: "{{ javapackagename }}"
         state: present
     - name: add tomcat group
       ansible.builtin.group:
-        name: tomcat
+        name: "{{ tomcat_group }}"
         state: present
         system: yes
     - name : add tomcat user
       ansible.builtin.user:
-        name: tomcat
-        group: tomcat
-        home: /usr/share/tomcat
+        name: "{{ tomcat_user }}"
+        group: "{{ tomcat_group }}"
+        home: "{{ tomcat_home }}"
         system: yes
         shell: /usr/bin/false
     - name: install wget
@@ -31,13 +41,14 @@
         name: wget
         state: installed
     - name: Download latest apache tomcat
-      ansible.builtin.command: wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.64/bin/apache-tomcat-9.0.64.tar.gz
+      #ansible.builtin.command: wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.64/bin/apache-tomcat-9.0.64.tar.gz
+      ansible.builtiin.command: wget "{{ tomcat_download_url }}{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
     - name: extract apache tomcat
       ansible.builtin.unarchive:
-        src: /home/ec2-user/apache-tomcat-9.0.64.tar.gz
+        src: "/home/ec2-user/apache-tomcat-{{ tomcat_version }}.tar.gz"
         dest: /usr/share/
-        owner: tomcat
-        group: tomcat
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_grop }}"
         remote_src: yes
     - name: create tomcat service
       ansible.builtin.copy:
