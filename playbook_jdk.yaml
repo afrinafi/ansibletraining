@@ -1,14 +1,15 @@
 ---
-- name: instal jkd11
+- name: install jkd11
   hosts: all
+  become: True
   tasks:
   - name: update latest software in the server
-    ansible.buildin.yum:
+    ansible.builtin.yum:
       name: "*"
       state: latest
   - name: enable open jdk in amazon linux
-    ansible.buildin.command: amazon-linux-extracs enable java-openjdk11
-  - name:  instal the openjdk11
-    ansible.buildin.yum:
+    ansible.builtin.command: amazon-linux-extras enable java-openjdk11
+  - name:  install the openjdk11
+    ansible.builtin.yum:
       name: java-11-openjdk
       state: latest
