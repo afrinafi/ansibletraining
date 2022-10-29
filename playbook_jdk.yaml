@@ -13,3 +13,44 @@
     ansible.builtin.yum:
       name: java-11-openjdk
       state: latest
+  - name: create tomcat group
+    ansible.builtin.group:
+      name: tomcat
+      state: present
+      system: yes
+  - name: create tomcat user
+    ansible.builtin.user:
+      name: tomcat
+      group: tomcat
+      system: yes
+      shell: /bin/bash
+  - name: install wget package
+    ansible.builtin.yum:
+       name: wget
+       state: latest
+  - name: dowload latest tomcat package
+    ansible.builtin.command: wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.68/bin/apache-tomcat-9.0.68.tar.gz
+  - name: extract tomcat archive file
+    ansible.builtin.unarchive:
+       src: /home/ec2-user/apache-tomcat-9.0.68.tar.gz
+       dest: /usr/share/
+       owner: tomcat
+       group: tomcat
+       remote_src: yes
+  - name: create symbolic link for tomcat
+    ansible.builtin.file:
+       src: /usr/share/apache-tomcat-9.0.68
+       dest: /usr/share/tomcat
+       owner: tomcat
+       group: tomcat
+       state: link
+  - name: copy tomcat service file to systemd folder
+    ansible.builtin.copy:
+       src: tomcat.service
+       dest: /etc/systemd/system/tomcat.service
+  - name: restart systemd, enable tomcat service and start tomcat service
+    ansible.builtin.systemd:
+       name: tomcat.service
+       daemon-reload: yes
+       state: started
+       enabled: yes
